@@ -67,18 +67,6 @@ def get_moodle_session(user, passwd):
 
 	return session
 
-def main(AUTH_MOODLE, user, passwd, url, files):
-	session = get_moodle_session(user, passwd)
-	links = get_file_links(session, url)
-
-	for link in links:
-		for ft in files:
-			reg = compile(ft[0])
-			match = reg.findall(link)
-			if match != []:
-				create_filepath(ft[1])
-				download_file(session, link, ft[1] + '/' + match[0])
-
 def main(mode, url, files, user='', passwd='', base=''):
 	session = None
 	if mode == AUTH_MOODLE:
