@@ -39,8 +39,17 @@ def download_files(session, files):
 def resolve_direct_links(session, hrefs):
 	links = []
 	for href in hrefs:
-		links.append(session.head(href).headers['Location'])
+		tmp = session.head(href).headers
+		if 'Location' in tmp:
+			links.append(tmp['Location'])
 	return links
+
+def get_links_from_folder(session, urls):
+	hrefs = []
+	for url in urls:
+		response = session.get(url)
+		hrefs += findall(compile('https\:\/\/www\.moodle\.tum\.de\/pluginfile\.php\/\d{6}\/mod_folder\/content\/0\/(?:[\w\d\_\-]*\/)*[\w\d\_\-\.]{1,}'), response.text)
+	return hrefs
 
 def get_file_links(session, url, files):
 	links = []
@@ -48,11 +57,18 @@ def get_file_links(session, url, files):
 	response = session.get(url)
 
 	if 'www.moodle.tum.de' in url:
+		# get file links
 		hrefs = findall(compile('https\:\/\/www\.moodle\.tum\.de\/mod\/resource\/view\.php\?id\=\d{6}'), response.text)
+		# resolve all links to direct to the files
 		hrefs = resolve_direct_links(session, hrefs)
+		# get folder links
+		folders = findall(compile('https\:\/\/www\.moodle\.tum\.de\/mod\/folder\/view\.php\?id\=\d{6}'), response.text)
+		if folders:
+			hrefs += get_links_from_folder(session, folders)
 	else:
 		hrefs = html.fromstring(response.text).xpath('//a/@href')
 
+# ---------------
 
 	for f in files:
 		reg = compile(f[0])
