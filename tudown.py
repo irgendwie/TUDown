@@ -133,13 +133,12 @@ def main(url, files, user='', passwd=''):
     # download files
     #print(threading.active_count())
     t1 = clock()
+    worker = []
     for l in links:
         while threading.active_count() > NUM_THREADS:
-            sleep(0.02)
-        Thread(target=download_files, args=(session, l)).start()
+            sleep(0.1)
+        worker.append(Thread(target=download_files, args=(session, l)).start())
 
-    while threading.active_count() > 1:
-            #print(threading.active_count())
-            sleep(0.5)
+    [t.join() for t in worker if t]
     #print("delta download threaded:", clock() - t1)
 
