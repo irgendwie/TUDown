@@ -24,9 +24,9 @@ tudown.main(url, files)
 url = 'http://wwwmayr.informatik.tu-muenchen.de/lehre/2015SS/theo/uebung/'
 
 files = [
-    ('ue\d*\.pdf', 'Übungsblätter'),
-    ('loesungen/lo\d*\.pdf', 'Lösungsblätter'),
-    ('theo15zue\d*_druck\.pdf', 'Skript/ZÜ'),
+    ('ue\d{2}\.pdf', 'Übungsblätter'),
+    ('lo\d{2}_HA\.pdf', 'Lösungsblätter'),
+    ('theo15zue\d{2}_druck\.pdf', 'Skript/ZÜ'),
 ]
 
 tudown.main(url, files, user=user, passwd=passwd)

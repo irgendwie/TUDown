@@ -1,15 +1,14 @@
 #!/usr/bin/python3
-from threading import Thread
-import threading
+from threading import Thread, active_count
 from requests import Session, utils
 from lxml import html
 from re import compile, findall
 from os import makedirs
 from os.path import exists, getmtime
 from calendar import timegm
-from time import strptime, clock, time, sleep
+from time import strptime, sleep
 
-NUM_THREADS = 5  # It's ok....
+NUM_THREADS = 5  # max number of threads
 
 def create_filepath(filepath):
     if not exists(filepath):
@@ -43,24 +42,20 @@ def download_files(session, f):
 
 def resolve_direct_links(session, hrefs):
     links = []
-    t = clock()
     for href in hrefs:
         tmp = session.head(href).headers
         if 'Location' in tmp:
             links.append(tmp['Location'])
-    #print("delta resolve:", clock() - t)
     return links
 
 
 def get_links_from_folder(session, urls):
     hrefs = []
-    t = clock()
     for url in urls:
         response = session.get(url)
         hrefs += findall(compile(
             'https\:\/\/www\.moodle\.tum\.de\/pluginfile\.php\/\d{6}\/mod_folder\/content\/0\/(?:[\w\d\_\-]*\/)*[\w\d\_\-\.]{1,}'),
             response.text)
-    #print("delta folder:", clock() - t)
     return hrefs
 
 
@@ -82,7 +77,7 @@ def get_file_links(session, url, files):
         hrefs = html.fromstring(response.text).xpath('//a/@href')
 
     # ---------------
-    t = clock()
+
     for f in files:
         reg = compile(f[0])
         for href in hrefs:
@@ -92,7 +87,6 @@ def get_file_links(session, url, files):
                     links.append((url + href, f[1]))
                 else:
                     links.append((href, f[1]))
-    #print("delta regex:", clock() - t)
     return links
 
 
@@ -115,7 +109,6 @@ def establish_moodle_session(user, passwd):
 
 def main(url, files, user='', passwd=''):
     # create session
-    t = clock()
     if 'www.moodle.tum.de' in url:
         session = establish_moodle_session(user, passwd)
     else:
@@ -124,21 +117,15 @@ def main(url, files, user='', passwd=''):
         session.headers = {
             "Accept-Language": "de-DE,de;"
         }
-    #print("delta session:", clock() - t)
-
 
     # get file links
     links = get_file_links(session, url, files)
 
     # download files
-    #print(threading.active_count())
-    t1 = clock()
     worker = []
     for l in links:
-        while threading.active_count() > NUM_THREADS:
+        while active_count() > NUM_THREADS:
             sleep(0.1)
         worker.append(Thread(target=download_files, args=(session, l)).start())
 
     [t.join() for t in worker if t]
-    #print("delta download threaded:", clock() - t1)
-
