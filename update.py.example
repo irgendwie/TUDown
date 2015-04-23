@@ -11,8 +11,8 @@ passwd = ''
 url = 'http://wwwmayr.informatik.tu-muenchen.de/lehre/2015SS/theo/'
 
 files = [
-	('2015-theo\.pdf', 'Skript'),
-	('2015-\d{2}-\d{2}\.pdf', 'Skript'),
+    ('2015-theo\.pdf', 'Skript'),
+    ('2015-\d{2}-\d{2}\.pdf', 'Skript'),
 ]
 
 tudown.main(url, files)
@@ -24,9 +24,9 @@ tudown.main(url, files)
 url = 'http://wwwmayr.informatik.tu-muenchen.de/lehre/2015SS/theo/uebung/'
 
 files = [
-	('ue\d*\.pdf', 'Übungsblätter'),
-	('loesungen/lo\d*\.pdf', 'Lösungsblätter'),
-	('theo15zue\d*_druck\.pdf', 'Skript/ZÜ'),
+    ('ue\d*\.pdf', 'Übungsblätter'),
+    ('loesungen/lo\d*\.pdf', 'Lösungsblätter'),
+    ('theo15zue\d*_druck\.pdf', 'Skript/ZÜ'),
 ]
 
 tudown.main(url, files, user=user, passwd=passwd)
