@@ -18,7 +18,9 @@ def create_filepath(filepath):
 def download_files(session, f):
     filename = f[1] + utils.unquote(f[0])[utils.unquote(f[0]).rindex('/'):]
     if not exists(filename):
-        response = session.get(f[0])
+        response = session.get(f[0], allow_redirects=False)
+        if response.status_code == 301:
+            download_files(session, (response.headers['Location'], f[1]))
         if response.status_code == 200:
             create_filepath(f[1])
             with open(filename, 'wb') as fd:
