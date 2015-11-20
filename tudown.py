@@ -21,7 +21,7 @@ def download_files(session, f):
         response = session.get(f[0], allow_redirects=False)
         if response.status_code == 301:
             download_files(session, (response.headers['Location'], f[1]))
-        if response.status_code == 200:
+        elif response.status_code == 200:
             create_filepath(f[1])
             with open(filename, 'wb') as fd:
                 for chunk in response.iter_content(1024):
