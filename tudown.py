@@ -28,8 +28,10 @@ def download_files(session, f):
                     fd.write(chunk)
             print('[+] ' + filename)
     else:
-        response = session.head(f[0])
-        if response.status_code == 200:
+        response = session.head(f[0], allow_redirects=False)
+        if response.status_code == 301:
+            download_file(session, (response.headers['Location'], f[1]))
+        elif response.status_code == 200:
             last_mod_file = getmtime(filename)
             last_mod_www = timegm(strptime(response.headers['Last-Modified'], '%a, %d %b %Y %H:%M:%S %Z'))
             if last_mod_www > last_mod_file:
@@ -117,7 +119,7 @@ def main(url, files, user='', passwd=''):
         session = Session()
         session.auth = (user, passwd)
         session.headers = {
-            "Accept-Language": "de-DE,de;"
+            "Accept-Language": "en-US,en;"
         }
 
     # get file links
