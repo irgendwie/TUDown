@@ -30,7 +30,7 @@ def download_files(session, f):
     else:
         response = session.head(f[0], allow_redirects=False)
         if response.status_code == 301:
-            download_file(session, (response.headers['Location'], f[1]))
+            download_files(session, (response.headers['Location'], f[1]))
         elif response.status_code == 200:
             last_mod_file = getmtime(filename)
             last_mod_www = timegm(strptime(response.headers['Last-Modified'], '%a, %d %b %Y %H:%M:%S %Z'))
