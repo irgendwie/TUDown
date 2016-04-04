@@ -33,7 +33,12 @@ def download_files(session, f):
             download_files(session, (response.headers['Location'], f[1]))
         elif response.status_code == 200:
             last_mod_file = getmtime(filename)
-            last_mod_www = timegm(strptime(response.headers['Last-Modified'], '%a, %d %b %Y %H:%M:%S %Z'))
+            try:
+                last_mod_www = timegm(strptime(response.headers['Last-Modified'], '%a, %d %b %Y %H:%M:%S %Z'))
+            except KeyError:
+                print('Can\'t check {} for updates.'.format(f[0]))
+                last_mod_www = last_mod_file
+
             if last_mod_www > last_mod_file:
                 response = session.get(f[0])
                 if response.status_code == 200:
