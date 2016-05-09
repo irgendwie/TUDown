@@ -7,6 +7,7 @@ from os import makedirs
 from os.path import exists, getmtime
 from calendar import timegm
 from time import strptime, sleep
+from urllib.parse import unquote
 
 NUM_THREADS = 5  # max number of threads
 
@@ -57,6 +58,9 @@ def resolve_direct_links(session, hrefs):
             links.append(tmp['Location'])
     return links
 
+def resolve_direct_link(session, href):
+    return resolve_direct_links(session, [href])[0]
+
 
 def get_links_from_folder(session, urls):
     hrefs = []
@@ -64,33 +68,32 @@ def get_links_from_folder(session, urls):
         response = session.get(url)
         hrefs += findall(compile(
             'https\:\/\/www\.moodle\.tum\.de\/pluginfile\.php\/\d{6}\/mod_folder\/content\/0\/(?:[\w\d\_\-]*\/)*[\w\d\_\-\.]{1,}'),
-            response.text)
+                         response.text)
     return hrefs
 
+def get_link_from_folder(session, url):
+    return get_links_from_folder(session, [url])[0]
 
 def get_file_links(session, url, files):
     links = []
 
     response = session.get(url)
 
-    if 'www.moodle.tum.de' in url:
-        # get file links
-        hrefs = findall(compile('https\:\/\/www\.moodle\.tum\.de\/mod\/resource\/view\.php\?id\=\d{6}'), response.text)
-        # resolve all links to direct to the files
-        hrefs = resolve_direct_links(session, hrefs)
-        # get folder links
-        folders = findall(compile('https\:\/\/www\.moodle\.tum\.de\/mod\/folder\/view\.php\?id\=\d{6}'), response.text)
-        if folders:
-            hrefs += get_links_from_folder(session, folders)
-    else:
-        hrefs = html.fromstring(response.text).xpath('//a/@href')
+    hrefs = html.fromstring(response.text).xpath('//a/@href')
+    for i in range(0, len(hrefs)):
+        href = hrefs[i]
+        if 'moodle.tum.de/mod/resource/view.php' in href:
+            hrefs[i] = resolve_direct_link(session, href)
+        if 'moodle.tum.de/mod/folder/view.php' in href:
+            hrefs[i] = get_link_from_folder(session, href)
+    hrefs = [href.replace('?forcedownload=1', '') for href in hrefs]
 
     # ---------------
 
     for f in files:
         reg = compile(f[0])
         for href in hrefs:
-            match = reg.findall(href)
+            match = reg.findall(unquote(href))
             if match:
                 if not ('https://' in href or 'http://' in href):
                     links.append((url + href, f[1]))
