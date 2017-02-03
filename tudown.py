@@ -67,7 +67,7 @@ def get_links_from_folder(session, urls):
     for url in urls:
         response = session.get(url)
         hrefs += findall(compile(
-            'https\:\/\/www\.moodle\.tum\.de\/pluginfile\.php\/\d{6}\/mod_folder\/content\/0\/(?:[\w\d\_\-]*\/)*[\w\d\_\-\.]{1,}'),
+            'https\:\/\/www\.moodle\.tum\.de\/pluginfile\.php\/\d+\/mod_folder\/content\/0\/(?:[\w\d\_\-]*\/)*[\w\d\_\-\.]+'),
                          response.text)
     return hrefs
 
@@ -90,6 +90,8 @@ def get_file_links(session, url, files):
 
     # ---------------
 
+    url = url.replace('index.html.en','').replace('index.html.de','')
+
     for f in files:
         reg = compile(f[0])
         for href in hrefs:
@@ -99,16 +101,16 @@ def get_file_links(session, url, files):
                     links.append((url + href, f[1]))
                 else:
                     links.append((href, f[1]))
+
     return links
 
 
 def establish_moodle_session(user, passwd):
     session = Session()
 
-    session.get(
-        'https://www.moodle.tum.de/Shibboleth.sso/Login?providerId=https://tumidp.lrz.de/idp/shibboleth&target=https://www.moodle.tum.de/auth/shibboleth/index.php')
-    response = session.post('https://tumidp.lrz.de/idp/Authn/UserPassword',
-                            data={'j_username': user, 'j_password': passwd})
+    response = session.get('https://www.moodle.tum.de')
+    response = session.get('https://www.moodle.tum.de/Shibboleth.sso/Login?providerId=https://tumidp.lrz.de/idp/shibboleth&target=https://www.moodle.tum.de/auth/shibboleth/index.php')
+    response = session.post('https://tumidp.lrz.de/idp/profile/SAML2/Redirect/SSO?execution=e1s1', data={'j_username': user, 'j_password': passwd, '_eventId_proceed':''})
 
     parsed = html.fromstring(response.text)
 
@@ -117,7 +119,6 @@ def establish_moodle_session(user, passwd):
                        'SAMLResponse': parsed.forms[0].fields['SAMLResponse']})
 
     return session
-
 
 def main(url, files, user='', passwd=''):
     # create session
